@@ -44,7 +44,7 @@ var prevSaveTime = new Date(0); // epoch
 // highscore list
 var topNames  = ['dom'];
 var topScore  = [10];
-var topSize   = 5;
+var topSize   = 10;
 
 // returns whether we changed the highscores
 function topInsert(name, score) {
