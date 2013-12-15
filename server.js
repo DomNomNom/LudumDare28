@@ -1,25 +1,32 @@
 var app = require('http').createServer(handler);
 var io = require('socket.io').listen(app);
 var fs = require('fs');
+var util = require('util');
 
 app.listen(9001);
-// app.listen('0.0.0.0:8080');
 
 var count = 0;
+function readFile(res, fileName){
+  fs.readFile(
+    __dirname +'/'+ fileName,
+    function (err, data) {
+      if (err) {
+        res.writeHead(500);
+        return res.end('Error loading: ' + fileName);
+      }
+
+      res.writeHead(200);
+      res.end(data);
+    }
+  );
+}
 
 function handler (req, res) {
-  console.log('a: ' + req);
+  //console.log('a: ' + req);
+  console.log('request for: ' + util.inspect(req.url));
 
-  fs.readFile(__dirname + '/index.html',
-  function (err, data) {
-    if (err) {
-      res.writeHead(500);
-      return res.end('Error loading index.html');
-    }
-
-    res.writeHead(200);
-    res.end(data);
-  });
+  var url = req.url;
+  if (url == '/') readFile(res, 'index.html');
 }
 
 io.sockets.on('connection', function (socket) {
