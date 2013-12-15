@@ -1,11 +1,11 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="http://bootswatch.com/slate/bootstrap.min.css"
-    />
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="http://bootswatch.com/slate/bootstrap.min.css"
+  />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Ludum Dare 28 :D</title>
@@ -18,20 +18,20 @@
 
       <div>&nbsp;</div>
       <strong>Game Rules:</strong>
-      <div> There is only one pot of points.  </div>
+      <div> There is only one magical pot of gold.  </div>
       <div> You can grab what's in the pot with the big button. </div>
-      <div> When no-one grabs the pot, the pot grows faster. </div>
+      <div> When no one grabs the gold, the pot grows faster. </div>
       <div>&nbsp;</div>
       <div>
-        No one has pushed the button in <span id="outseconds">X</span> seconds.
+        No one has grabbed gold for <span id="outseconds">X</span> seconds.
       </div>
       <div>
-        If you grab now, you will get <span id="outpotential">Y</span> points.
+        If you grab now, you will get <span id="outpotential">Y</span> gold.
       </div>
 
       <hr>
 
-      <form role="form">
+      <!-- <form role="form"> -->
         <div class="form-group " id="name-form-group">
           <label class="control-label" for="name">Username:</label>
           <input
@@ -47,23 +47,31 @@
         onclick="grab();"
         style="height:100px"
       >
-        Grab the pot
+        <span id="verb">Grab</span> the gold!
       </button>
 
       <div>&nbsp;</div>
       <div id="output" class="hide">
         <div>
-          You scored
-          <span id="outscore">0</span>!
+          You got
+          <span id="outscore">0</span> gold!
         </div>
         <div>
-          bringing the total of
-          <span id="outname"></span>
-          to
+          A total of
           <span id="outtotal">0</span>
+          gold belongs to
+          <span id="outname"></span>
+          now.
         </div>
       </div>
-    </div>
+
+      <hr>
+
+      <strong>Highscores</strong>
+
+      <table id="highscores" class="table hide"></table>
+
+    </div> <!-- collumn -->
   </div>
 
 <!--
@@ -87,13 +95,26 @@
   var socket = io.connect();
   var prevTime = new Date();
 
+  var verbs = [
+    'Grab',
+    'Grab',
+    'Take',
+    'Take',
+    'Steal',
+    'Steal',
+    'Reave',
+    'Claim',
+    'Nick',
+    'Eat'
+  ];
+
   function updatePotential() {
     grabTime = new Date();
     var seconds = 0.001 * (
       grabTime.getTime() -
       prevTime.getTime()
     );
-    var score = seconds * seconds;
+    var score = 0.3 * seconds * seconds;
 
     $('#outpotential').html(score.toFixed(1));
     $('#outseconds').html(seconds.toFixed(1));
@@ -104,17 +125,42 @@
     prevTime = new Date(data.prevTime);
     updatePotential();
   });
+
   socket.on('score', function (data) {
     $('#outscore').html(data.score.toFixed(1));
     $('#outtotal').html(data.total.toFixed(1));
-    $('#outname').html(data.name);
+    $('#outname').text(data.name);
     $('#output').removeClass('hide');
+
+    var verb = verbs[Math.floor(Math.random()*verbs.length)];
+    $('#verb').text(verb);
   });
+
+  // update the highscore table
+  socket.on('highscores', function (data) {
+    // ugle table building
+    var html = '<thead><tr><th>#</th><th>name</th><th>score</th></tr></thead>';
+    for (var i=0; i<data.topNames.length; i+=1) {
+      html += '<tr>';
+      html += '<td>'+(i+1)+'</td>';
+      html += '<td id="top-name' +i+'"></td>';
+      html += '<td id="top-score'+i+'"></td>';
+      html += '</tr>';
+    }
+    $('#highscores').html(html).removeClass('hide');
+
+    // fill in the data
+    for (var i=0; i<data.topNames.length; i+=1) {
+      $('#top-name' +i).text(data.topNames[i]);
+      $('#top-score'+i).text(data.topScore[i].toFixed(1));
+    }
+  });
+
 
   function grab() {
     var username = $('#name').val();
 
-    if (!username){
+    if (!username) { // don't allow no user name
       $('#name-form-group').addClass('has-error');
       return;
     }
