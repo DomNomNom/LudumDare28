@@ -8,6 +8,8 @@ app.listen(9001);
 var count = 0;
 
 function handler (req, res) {
+  console.log('a: ' + req);
+
   fs.readFile(__dirname + '/index.html',
   function (err, data) {
     if (err) {
