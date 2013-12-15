@@ -20,7 +20,8 @@ var options = {
     },
     restart: function () {
         with(board) {
-            arr = utility.make2Darray(8)
+            arr = utility.make2Darray(8);
+            arr[2] = ['blue', 'red', 'blue', 'red'];
             turn = 'blue';
             quatro.length = 0;
             win = false;
@@ -75,6 +76,7 @@ var utility = {
         return a;
     }
 }
+var debug;
 var board = {
     turn: 'blue',
     col: 0,
@@ -134,6 +136,20 @@ var board = {
             }
         }
     },
+    put: function (col, turn) {
+        // var that = this;
+        if (this.arr[col].length == 8) {
+            console.log(texts.no_moves);
+            return false;
+        }
+        this.arr[col].push(this.turn);
+        var row = this.arr[col].lenth;
+        var cell = board.table.find('aside').eq(col).find('div').eq(row);
+        console.log('board ' + board);
+        console.log('cell ' + cell);
+
+        cell.addClass(turn).append('<b><b></b></b>');
+    },
     makeMove: function (row, col) {
         var that = this,
             cell, position, duration;
@@ -148,25 +164,31 @@ var board = {
             that.animating = true;
             position = row * 51;
             duration = row * 80 + 150;
-            that.handle.animate({
-                top: position
-            }, duration, "easeOutBounce", function () {
-                that.animating = false;
-                that.handle.hide();
-                cell = that.table.find('aside').eq(col).find('div').eq(row);
-                cell.addClass(that.turn).append('<b><b></b></b>');
-                if (that.checkWin(7 - row, col))
-                    that.gameOver();
-                else {
-                    that.handle.show().css({
-                        top: '-55px',
-                        left: that.col * 51
-                    }).find('> b > b').animate({
-                        padding: '22px'
-                    }, 400, "easeOutExpo");
-                    that.changeTurn();
+            that.handle.animate(
+                {
+                    top: position
+                },
+                duration,
+                "easeOutBounce",
+                function () {
+                    that.animating = false;
+                    that.handle.hide();
+                    cell = that.table.find('aside').eq(col).find('div').eq(row);
+                    cell.addClass(that.turn).append('<b><b></b></b>');
+                    debug = cell;
+                    if (that.checkWin(7 - row, col))
+                        that.gameOver();
+                    else {
+                        that.handle.show().css({
+                            top: '-55px',
+                            left: that.col * 51
+                        }).find('> b > b').animate({
+                            padding: '22px'
+                        }, 400, "easeOutExpo");
+                        that.changeTurn();
+                    }
                 }
-            });
+            );
         }
     },
     changeTurn: function () {

@@ -5,7 +5,7 @@ var util = require('util');
 
 app.listen(9001);
 
-var count = 0;
+// ====== Webserver hander ======
 
 // sends a file to the user
 function readFile(res, fileName){
@@ -23,18 +23,53 @@ function readFile(res, fileName){
   );
 }
 
-function handler (req, res) {
-  //console.log('a: ' + req);
-  console.log('request for: ' + util.inspect(req.url));
-
+function handler(req, res) {
   var url = req.url;
   if      (url == '/'             ) readFile(res, 'index.html'  );
   else if (url == '/connect4.css' ) readFile(res, 'connect4.css');
   else if (url == '/connect4.js'  ) readFile(res, 'connect4.js' );
+  else if (url == '/favicon.ico'  ) { }
   else console.log('bad URL: ' + url);
 }
 
+
+// ====== socket hander ======
+
+
+var count = 0;
+var scores = {};
+var prevTime = new Date();
+var prevSaveTime = new Date(0); // epoch
+
+
 io.sockets.on('connection', function (socket) {
+  socket.emit('prevTime', {prevTime:prevTime});
+  socket.on('grab', function (data) {
+    if (!data.name) return;
+    grabTime = new Date();
+    // concurrency bugs go here
+    var seconds = 0.001 * (
+      grabTime.getTime() -
+      prevTime.getTime()
+    );
+    prevTime = grabTime;
+    var score = seconds * seconds;
+
+    var total = score;
+    if (data.name in scores) {
+      total += scores[data.name];
+    }
+    scores[data.name] = total;
+
+    socket.emit('score', {
+      score: score,
+      total: total,
+      name:  data.name
+    });
+    io.sockets.emit('prevTime', {prevTime:prevTime});
+  });
+
+  // counter
   io.sockets.emit('count', {count: count});
   socket.on('increment', function (data) {
     count += 1;

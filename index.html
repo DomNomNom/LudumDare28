@@ -1,33 +1,140 @@
-
 <html>
-<body>
-<button onclick="socket.emit('increment',{});">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="http://bootswatch.com/slate/bootstrap.min.css"
+    />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ludum Dare 28 :D</title>
+</head>
+<body class="container">
+  <div class="row">
+    <div class="col-md-4">&nbsp;</div>
+    <div class="col-md-4">
+      <h1>One Pot</h1>
+
+      <div>&nbsp;</div>
+      <strong>Game Rules:</strong>
+      <div> There is only one pot of points.  </div>
+      <div> You can grab what's in the pot with the big button. </div>
+      <div> When no-one grabs the pot, the pot grows faster. </div>
+      <div>&nbsp;</div>
+      <div>
+        No one has pushed the button in <span id="outseconds">X</span> seconds.
+      </div>
+      <div>
+        If you grab now, you will get <span id="outpotential">Y</span> points.
+      </div>
+
+      <hr>
+
+      <form role="form">
+        <div class="form-group " id="name-form-group">
+          <label class="control-label" for="name">Username:</label>
+          <input
+            class="form-control"
+            id="name"
+            placeholder="Your username here"
+            onchange="$('#name-form-group').removeClass('has-error');"
+          >
+        </div>
+      <button
+        type="button"
+        class="btn btn-default btn-lg btn-block"
+        onclick="grab();"
+        style="height:100px"
+      >
+        Grab the pot
+      </button>
+
+      <div>&nbsp;</div>
+      <div id="output" class="hide">
+        <div>
+          You scored
+          <span id="outscore">0</span>!
+        </div>
+        <div>
+          bringing the total of
+          <span id="outname"></span>
+          to
+          <span id="outtotal">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!--
+  <button onclick="socket.emit('increment',{});">
     increment
-</button>
-<button onclick="socket.emit('reset',{});">
+  </button>
+  <button onclick="socket.emit('reset',{});">
     reset
-</button>
-<div id="count">[not yet connected]</div>
+  </button>
+  <div id="count">[not yet connected]</div>
+-->
 </body>
+
+
 <script src="http://code.jquery.com/jquery-latest.min.js"
         type="text/javascript"></script>
 <script src="/socket.io/socket.io.js"></script>
-
+<!-- <script src="/connect4.js"></script> -->
 <script>
-  //var socket = io.connect('http://localhost');
-  var socket = io.connect('http://segfault.net.nz:9001');
+  // var socket = io.connect('http://segfault.net.nz:9001');
+  var socket = io.connect();
+  var prevTime = new Date();
 
-  // var socket = io.connect('http://121.73.245.30');
+  function updatePotential() {
+    grabTime = new Date();
+    var seconds = 0.001 * (
+      grabTime.getTime() -
+      prevTime.getTime()
+    );
+    var score = seconds * seconds;
+
+    $('#outpotential').html(score.toFixed(1));
+    $('#outseconds').html(seconds.toFixed(1));
+  }
+  setInterval(updatePotential, 100);
+
+  socket.on('prevTime', function (data) {
+    prevTime = new Date(data.prevTime);
+    updatePotential();
+  });
+  socket.on('score', function (data) {
+    $('#outscore').html(data.score.toFixed(1));
+    $('#outtotal').html(data.total.toFixed(1));
+    $('#outname').html(data.name);
+    $('#output').removeClass('hide');
+  });
+
+  function grab() {
+    var username = $('#name').val();
+
+    if (!username){
+      $('#name-form-group').addClass('has-error');
+      return;
+    }
+    socket.emit('grab', {
+      name: username
+    });
+  }
+
+
+
 
 
   socket.on('count', function (data) {
-    // socket.emit('my other event', { my: 'data' });
-    // alert(data.count);
     $('#count').html(data.count);
   });
 
-  function increment() {
 
-  }
+  // console.log("hello ");
+  // board.init( $('#board_cont') );
+  // console.log("world ");
 </script>
+
 </html>
