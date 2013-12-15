@@ -6,6 +6,8 @@ var util = require('util');
 app.listen(9001);
 
 var count = 0;
+
+// sends a file to the user
 function readFile(res, fileName){
   fs.readFile(
     __dirname +'/'+ fileName,
@@ -26,7 +28,10 @@ function handler (req, res) {
   console.log('request for: ' + util.inspect(req.url));
 
   var url = req.url;
-  if (url == '/') readFile(res, 'index.html');
+  if      (url == '/'             ) readFile(res, 'index.html'  );
+  else if (url == '/connect4.css' ) readFile(res, 'connect4.css');
+  else if (url == '/connect4.js'  ) readFile(res, 'connect4.js' );
+  else console.log('bad URL: ' + url);
 }
 
 io.sockets.on('connection', function (socket) {
@@ -43,4 +48,4 @@ io.sockets.on('connection', function (socket) {
   });
 });
 
-console.log('running')
+console.log('running');
