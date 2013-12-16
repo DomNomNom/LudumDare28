@@ -33,11 +33,33 @@ function handler(req, res) {
 }
 
 
+var lastSave = new Date(0);
+// I should use a DB for this, but it's not that critical
+function backupScores() {
+  var now = new Date();
+  if (now.getTime()-lastSave.getTime() < 1000*60*60) {
+    return; // don't backup all the time
+  }
+
+  lastSave = now;
+  fs.writeFile(
+    "backups/scores"+lastSave.getTime()+".json",
+    JSON.stringify(scores),
+    'utf8',
+    function (err) {
+        if(err) {
+            console.log("Backup error: " + err);
+        } else {
+            console.log("Backup successful!");
+        }
+    });;
+}
+
 // ====== socket hander ======
 
 
 var count = 0;
-var scores = {};
+var scores = { 'dom' : 10 }; // TODO: load from backup
 var prevTime = new Date();
 var prevSaveTime = new Date(0); // epoch
 
@@ -87,20 +109,6 @@ function topInsert(name, score) {
 }
 
 
-// http://stackoverflow.com/questions/1344500/efficient-way-to-insert-a-number-into-a-sorted-array-of-numbers
-function locationOf(element, array, start, end) {
-  start = start || 0;
-  end = end || array.length;
-  var pivot = parseInt(start + (end - start) / 2);
-  if(end-start <= 1 || array[pivot] == element) return pivot;
-  if(array[pivot] < element) {
-    return locationOf(element, array, pivot, end);
-  } else{
-    return locationOf(element, array, start, pivot);
-  }
-}
-
-
 io.sockets.on('connection', function (socket) {
   socket.emit('prevTime', {prevTime:prevTime});
   socket.on('grab', function (data) {
@@ -127,12 +135,16 @@ io.sockets.on('connection', function (socket) {
       name:  data.name
     });
     io.sockets.emit('prevTime', {prevTime:prevTime});
-    if (topInsert(data.name, total)) { // do highscoring
+
+    // do highscoring
+    if (topInsert(data.name, total)) {
       io.sockets.emit('highscores', {
         topScore:topScore,
         topNames:topNames
       });
     }
+
+    backupScores();
   });
 
   // pass them the highscores at the start
@@ -142,7 +154,7 @@ io.sockets.on('connection', function (socket) {
   });
 
 
-  // === counter app  ===
+  // === old counter app  ===
   socket.emit('count', {count: count});
   socket.on('increment', function (data) {
     count += 1;
