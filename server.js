@@ -26,8 +26,6 @@ function readFile(res, fileName){
 function handler(req, res) {
   var url = req.url;
   if      (url == '/'             ) readFile(res, 'index.html'  );
-  else if (url == '/connect4.css' ) readFile(res, 'connect4.css');
-  else if (url == '/connect4.js'  ) readFile(res, 'connect4.js' );
   else if (url == '/favicon.ico'  ) { }
   else console.log('bad URL: ' + url);
 }
